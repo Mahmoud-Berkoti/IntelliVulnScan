@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - intellivulnscan-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./app/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./app/frontend:/app
+    depends_on:
+      - api
+    networks:
+      - intellivulnscan-network
+
+  # Database
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=intellivulnscan
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - intellivulnscan-network
+
+  # Redis for caching and task queue
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - intellivulnscan-network
+
+  # Celery Worker for background tasks
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - intellivulnscan-network
+    command: celery -A app.core.celery_app worker --loglevel=info
+
+  # Trivy Scanner
+  trivy:
+    image: aquasec/trivy:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - trivy_cache:/root/.cache/trivy
+    networks:
+      - intellivulnscan-network
+
+  # OpenVAS Scanner (optional)
+  openvas:
+    image: securecompliance/gvm:latest
+    ports:
+      - "9392:9392"
+    volumes:
+      - openvas_data:/data
+    networks:
+      - intellivulnscan-network
+
+  # Dependency-Check Scanner
+  dependency-check:
+    image: owasp/dependency-check:latest
+    volumes:
+      - ./:/src
+      - dependency_check_data:/usr/share/dependency-check/data
+    networks:
+      - intellivulnscan-network
+
+networks:
+  intellivulnscan-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  trivy_cache:
+  openvas_data:
+  dependency_check_data: 

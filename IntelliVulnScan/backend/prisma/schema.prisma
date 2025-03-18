@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User management
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  name           String
+  passwordHash   String
+  role           String   @default("USER")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  assets         Asset[]
+  vulnerabilities Vulnerability[]
+  scans          Scan[]
+  reports        Report[]
+  apiKeys        ApiKey[]
+  settings       Settings?
+}
+
+// User settings
+model Settings {
+  id                  Int      @id @default(autoincrement())
+  userId              Int      @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scanFrequency       String   @default("weekly")
+  retentionPeriod     Int      @default(90)
+  enableAutoScan      Boolean  @default(true)
+  enableMlPredictions Boolean  @default(true)
+  defaultTheme        String   @default("system")
+  itemsPerPage        Int      @default(20)
+  notificationEmail   String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  // Settings JSON fields
+  scanSettings        String   @default("{}")
+  uiSettings          String   @default("{}")
+  integrations        String   @default("{}")
+}
+
+// API keys for third-party integrations
+model ApiKey {
+  id        Int      @id @default(autoincrement())
+  name      String
+  key       String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  lastUsed  DateTime?
+}
+
+// Asset management
+model Asset {
+  id              Int      @id @default(autoincrement())
+  name            String
+  description     String?
+  ipAddress       String?
+  hostname        String?
+  macAddress      String?
+  assetType       String
+  operatingSystem String?
+  criticality     String   @default("medium")
+  status          String   @default("active")
+  ownerId         Int
+  owner           User     @relation(fields: [ownerId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  vulnerabilities AssetVulnerability[]
+  scans           ScanAsset[]
+  tags            TagsOnAssets[]
+  metadata        String   @default("{}")
+}
+
+// Tags for categorizing assets
+model Tag {
+  id          Int            @id @default(autoincrement())
+  name        String         @unique
+  color       String         @default("#1976d2")
+  description String?
+  assets      TagsOnAssets[]
+}
+
+model TagsOnAssets {
+  assetId Int
+  asset   Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  tagId   Int
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  addedAt DateTime @default(now())
+
+  @@id([assetId, tagId])
+}
+
+// Vulnerability management
+model Vulnerability {
+  id               Int      @id @default(autoincrement())
+  title            String
+  description      String
+  cveId            String?
+  cvssScore        Float?
+  severity         String   @default("medium")
+  status           String   @default("open")
+  discoveredById   Int
+  discoveredBy     User     @relation(fields: [discoveredById], references: [id])
+  discoveredAt     DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  fixedAt          DateTime?
+  assets           AssetVulnerability[]
+  remediation      String?
+  references       String   @default("[]")
+  metadata         String   @default("{}")
+}
+
+// Join table for many-to-many between assets and vulnerabilities
+model AssetVulnerability {
+  assetId         Int
+  asset           Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  vulnerabilityId Int
+  vulnerability   Vulnerability @relation(fields: [vulnerabilityId], references: [id], onDelete: Cascade)
+  status          String       @default("open")
+  addedAt         DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  fixedAt         DateTime?
+  notes           String?
+
+  @@id([assetId, vulnerabilityId])
+}
+
+// Scan management
+model Scan {
+  id           Int         @id @default(autoincrement())
+  name         String
+  description  String?
+  startedAt    DateTime    @default(now())
+  completedAt  DateTime?
+  status       String      @default("PENDING")
+  scanType     String
+  initiatedById Int
+  initiatedBy   User        @relation(fields: [initiatedById], references: [id])
+  assets       ScanAsset[]
+  results      String      @default("{}")
+  metadata     String      @default("{}")
+}
+
+// Join table for many-to-many between scans and assets
+model ScanAsset {
+  scanId      Int
+  scan        Scan      @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  assetId     Int
+  asset       Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  scannedAt   DateTime  @default(now())
+  status      String    @default("pending")
+  results     String    @default("{}")
+
+  @@id([scanId, assetId])
+}
+
+// Report management
+model Report {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  reportType  String
+  format      String
+  createdById Int
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  parameters  String    @default("{}")
+  downloadUrl String?
+  schedule    String?   // For scheduled reports
+}
+
+// ML model management
+model MLModel {
+  id                Int       @id @default(autoincrement())
+  name              String
+  description       String?
+  modelType         String
+  version           String
+  accuracy          Float?
+  precision         Float?
+  recall            Float?
+  f1Score           Float?
+  trainedAt         DateTime  @default(now())
+  lastUsed          DateTime?
+  status            String    @default("active")
+  trainingDataset   String?
+  hyperparameters   String?
+  metadata          String    @default("{}")
+} 
