@@ -2,7 +2,7 @@
 
 A comprehensive vulnerability management platform built with React, Node.js, and SQLite, designed to help security teams identify, track, and remediate security vulnerabilities across their infrastructure.
 
-## 🚀 Features
+## Features
 
 - **Vulnerability Management**: Track and manage vulnerabilities across your entire infrastructure
 - **Asset Inventory**: Maintain a comprehensive inventory of all assets
@@ -11,7 +11,7 @@ A comprehensive vulnerability management platform built with React, Node.js, and
 - **API Integration**: Easily integrate with existing security tools via API
 - **User Management**: Role-based access control
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
 - Node.js + TypeScript
@@ -27,12 +27,12 @@ A comprehensive vulnerability management platform built with React, Node.js, and
 - Axios
 - Recharts for data visualization
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Node.js (v14+)
 - npm or yarn
 
-## 🔧 Installation
+## Installation
 
 1. Clone the repository:
 ```bash
@@ -58,7 +58,7 @@ cd ../frontend
 npm install
 ```
 
-## 🚀 Running the Application
+## Running the Application
 
 1. Start the backend server:
 ```bash
@@ -74,12 +74,12 @@ npm start
 
 3. Access the application at http://localhost:3000
 
-## 🔒 Default Credentials
+## Default Credentials
 
 - Admin: admin@intellivulnscan.com / admin123
 - User: user@intellivulnscan.com / password123
 
-## 🛠️ API Endpoints
+## API Endpoints
 
 - **Authentication**: `/api/auth`
 - **Settings**: `/api/settings`
@@ -89,7 +89,7 @@ npm start
 - **Scans**: `/api/scans`
 - **Reports**: `/api/reports`
 
-## 📊 Dashboard
+## Dashboard
 
 The dashboard provides a comprehensive overview of your security posture, including:
 
@@ -98,10 +98,11 @@ The dashboard provides a comprehensive overview of your security posture, includ
 - Top vulnerable assets
 - Recent scans
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions, issues, and feature requests are welcome! 
+
